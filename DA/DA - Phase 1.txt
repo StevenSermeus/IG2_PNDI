@@ -1,0 +1,129 @@
+// STRUCTURES
+
+//  dataMotion {
+//     motion
+//     index
+//     gender
+//     vacc[600]
+//  }
+
+//  line {
+//     time
+//     attitude. x / y / z
+//     gravity. x / y / z
+//     rotation. x / y / z
+//     acceleration. x / y / z
+//  }
+
+---* Main
+testSetName = nom fichier test
+trainSetName = nom fichier entrainement
+repositories = liste de tous les répertoires
+nbRepos = 15
+module(createDataSet;nbRepos, repositories, testSetName, trainSetName;)
+------
+
+
+module(createDataSet;nbRepos, repositories, testSetName, trainSetName;)
+---*
+module(openFile;testSetName;testSetFile)
+module(openFile;trainSetName;trainSetFile)
+
+module(subjectsArray;;subjects)
+
+iPeopleTest = 1
+
+index = 0
+iRepo = 0
+do while(iRepo < nbRepos)
+  iPeopleRepo = 0
+  repository = repositories[iRepo]                    // path dossier
+
+  iFile = 1
+  do while(iFile <= 24)
+    csvPath = repository + "sub_" + iFile + ".csv"     // path = nom_dossier/sub_Fichier.csv
+    module(openFile;csvPath;csvFile)
+
+    module(motionNumber;csvPath[0..3];motionNumber)
+    dataMotion.motion = motionNumber
+    dataMotion.gender = subjects[iFile - 1].gender;
+    dataMotion.index = index
+    module(getLine;csvFile;line)
+    module(getLine;csvFile;line)
+    iVacc = 0
+    do while(!eof(csvFile) AND line.time < 600)
+      module(processLine;line;vacc)
+      dataMotion.vacc[line.time] = vacc
+      iVacc++
+      module(getLine;csvFile;line)
+    enddo
+    do while(iVacc < 600)
+      dataMotion.vacc[iVacc] = -1
+    enddo
+    if (iPeopleRepo < 2)
+      if (iPeopleTest == iFile)
+        module(writeLine;testSetFile, dataMotion;)
+        if (iPeopleTest == 24)
+          iPeopleTest = 1
+        else
+          iPeopleTest++
+        endif
+        iPeopleRepo++
+      else
+        module(writeLine;trainSetFile, dataMotion;)
+      endif
+    else
+      module(writeLine;trainSetFile, dataMotion;)
+    endif
+
+    dataMotion = reset
+
+    index++
+    iFile++
+    module(closeFile;csvFile;)
+  enddo
+  iPath++
+enddo
+module(closeFile;testSetFile;)
+module(closeFile;trainSetFile;)
+------
+
+module(subjectsArray;;subjects)
+---* 
+module(openFile;subjectFileName;subjectFile)
+module(getLine;subjectFile;line)
+iSubject = 0
+do while (iSubject  < 24)
+  module(getLine;subjectFile;line)
+  subjects[iSubject] = line
+
+  iSubject++
+enddo
+
+module(closeFile;subjectFile;)
+return subjects
+------
+
+
+module(motionNumber;motionCode;motionNumber)
+---* 
+if (motionCode == "dws")
+  motionNumber = 1
+elseif (motionCode == "jog")
+  motionNumber = 2
+elseif (motionCode == "sit")
+  motionNumber = 3
+elseif (motionCode == "std")
+  motionNumber = 4
+elseif (motionCode == "ups")
+  motionNumber = 5
+elseif (motionCode == "wlk")
+  motionNumber = 6
+endif
+return motionNumber
+------
+
+module(processLine;line;vacc)
+---* 
+return sqrt(line.acceleration.x^2 + line.acceleration.y^2 + line.acceleration.z^2)
+------

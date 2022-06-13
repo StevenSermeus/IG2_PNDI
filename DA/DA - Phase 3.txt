@@ -1,0 +1,97 @@
+// STRUCTURES
+
+// line {
+//    numLine
+//    numMotion
+//    genderSubject
+//    vacc[600]
+// }
+
+// modelDatas {          tableau de 600 cellules
+//    sum
+//    sumSquare
+//    nbValues
+// }
+
+// globalAverage {
+//    sumTotal
+//    nbValuesTotal
+// }
+
+module(modelCreation;;)
+---* 
+module(openFile;trainSetName;trainSetFile, openOK)
+if (!openOK)
+  // arrêter programme
+endif
+module(openFile;modelName;modelFile, openOK)
+if (!openOK)
+  // arrêter programme
+endif
+
+// ligne d'en-tête
+module(getLine;trainSetFile;line)
+module(getLine;trainSetFile;line)
+do while (!eof(trainSetFile))
+  module(resetDatas;modelDatas[];modelDatas[])
+
+  numMotion = line.numMotion
+  do while (!eof(trainSetFile) AND line.numMotion == numMotion)
+    iVacc = 0
+    do while (iVacc < 600 AND line.vacc[iVacc] != -1)
+      modelDatas[iVacc].sum += line.vacc[iVacc]
+      modelDatas[iVacc].sumSquare += line.vacc[iVacc]^2
+      modelDatas[iVacc].nbValues++
+      iVacc++
+    enddo
+    module(getLine;trainSetFile;line)
+  enddo
+
+  module(processAverage;modelDatas[];average[])
+  module(processStandartDeviation;modelDatas[], average[];standartDeviation[])
+  module(processGeneralAverage;average[];generalAverage)
+
+  module(writeLine;modelFile, numMotion, average[], standartDeviation[], generalAverage;)
+enddo
+
+module(closeFile;trainSetFile;)
+module(closeFile;modelFile;)
+------
+
+module(resetDatas;modelDatas[];modelDatas[])
+---* 
+i = 0;
+do while (i < 600)
+  modelDatas[i].sum = 0
+  modelDatas[i].sumSquare = 0
+  modelDatas[i].nbValues = 0
+  globalAverage.sumTotal = 0
+  globalAverage.nbValuesTotal = 0
+  i++
+enddo
+------
+
+module(processAverage;modelDatas[];average[])
+---* 
+i = 0
+do while (i < 600)
+  average[i] = modelDatas[i].sum / modelDatas[i].nbValues
+  globalAverage.sumTotal += modelDatas[i].sum
+  globalAverage.nbValuesTotal += modelDatas[i].nbValues
+  i++
+enddo
+------
+
+module(processStandartDeviation;modelDatas[], average[];standartDeviation[])
+---* 
+i = 0
+do while (i < 600)
+  standartDeviation[i] = sqrt(modelDatas[i].sumSquare / modelDatas[i].nbValues - average[i]^2)
+  i++
+enddo
+------
+
+module(processGeneralAverage;globalAverage;generalAverage)
+---* 
+generalAverage = globalAverage.sumTotal / globalAverage.nbValuesTotal
+------

@@ -1,0 +1,151 @@
+// STRUCTURES
+// model {
+//    numMotion
+//    vaccAvg[600]
+//    vaccStd[600]
+//    globalAverage
+// }
+
+// testLine {
+//    index
+//    numMotion
+//    gender
+//    vacc[600]
+// }
+
+module(Classification;;)
+---* 
+module(fillModel;;model[])
+module(fillClasses;model[];)
+------
+
+module(fillModel;;model[])
+---* 
+module(openFile;modelName;openOK)
+if (!openOK)
+  // arrêter programme
+endif
+
+do while (!feof(modelFile))
+  // averages
+  module(getLine;modelFile;line)
+  iMotion = line.numMotion - 1
+  model[iMotion].numMotion = line.numMotion
+
+  iVacc = 0
+  do while (!feof(modelFile) AND iVacc < 600)
+    model[iMotion].vaccAvg[iVacc] = line.avg[iVacc]
+    iVacc++
+  enddo
+
+  // standart deviations
+  module(getLine;modelFile;line)
+  iVacc = 0
+  do while (!feof(modelFile) AND iVacc < 600)
+    model[iMotion].vaccStd[iVacc] = line.std[iVacc]
+    iVacc++
+  enddo
+
+  // globalAverage
+  module(getLine;modelFile;line)
+  model[iMotion].globalAverage = line.globalAverage
+enddo
+
+module(closeFile;modelFile;)
+------
+
+module(fillClasses;realClasses[], estimatedClasses[], model[];)
+---* 
+module(openFile;testSetName;openOK)
+if (!openOK)
+  // arrêter programme
+endif
+
+iTest = 0
+// entête
+module(getLine;testSetFile;lineTest)
+module(getLine;testSetFile;lineTest)
+realClasses[iTest] = lineTest.numMotion
+
+do while (!feof(testSetFile))
+  iVacc = 0
+  do while (!feof(testSetFile) AND i < 600)
+    vacc[iVacc] = lineTest.vacc[iVacc]
+    iVacc++
+  enddo
+  module(guessMotion;model, vacc;estimatedClass)
+  estimatedClasses[iTest] = estimatedClass
+
+  module(getLine;testSetFile;lineTest)
+  if (!feof(testSetFile))
+    iTest++
+    realClasses[iTest] = lineTest.numMotion
+  endif
+enddo
+
+module(displayConfusionMatrix;realClasses, estimatedClasses, iTest;)
+module(displayAccuracy;realClasses, estimatedClasses, iTest;)
+module(displayResultsByClass;realClasses, estimatedClasses, iTest;)
+module(closeFile;testSetFile;)
+------
+
+module(guessMotion;model[], vacc[];estimatedClass)
+---* 
+vaccAvg[6] = 0
+vaccStd[6] = 0
+globalAvg[6] = 0
+
+iMotion = 0
+do while (iMotion < 6)
+  iVacc = 0
+  do while (iVacc < 600)
+    vaccAvg[iMotion] += (vacc[iVacc] - model[iMotion].vaccAvg[iVacc]) ^ 2
+    vaccStd[iMotion] += (sqrt((vacc[iVacc] - model[iMotion].vaccAvg[iVacc]) ^ 2) - model[iMotion].vaccStd[iVacc]) ^ 2
+    globalAvg[iMotion] += vacc[iVacc]
+    iVacc++
+  enddo
+  iMotion++
+enddo
+
+iMotion = 0
+do while (iMotion < 6)
+  vaccAvg[iMotion] = sqrt(vaccAvg[iMotion])
+  vaccstd[iMotion] = sqrt(vaccStd[iMotion])
+  globalAvg[iMotion] = abs(globalAvg[iMotion] / 600 - model[iMotion].globalAvg)
+  iMotion++
+enddo
+
+guess[6] = 0
+
+minIndexAvg = 0
+minIndexStd = 0
+minIndexGlobal = 0
+
+iMotion = 0
+do while (iMotion < 6)
+  if (vaccAvg[iMotion] < vaccAvg[minIndexAvg])
+    minIndexAvg = iMotion
+  endif
+  if (vaccStd[iMotion] < vaccStd[minIndexStd])
+    minIndexStd = iMotion
+  endif
+  if (globalAvg[iMotion] < globalAvg[minIndexGlobal])
+    minIndexGlobal = iMotion
+  endif
+  iMotion++
+enddo
+
+guess[minIndexAvg]++
+guess[minIndexStd]++
+guess[minIndexGlobal]++
+
+iMotion = 0
+do while (iMotion < 6)
+  if (guess[iMotion] > 1)
+    return iMotion + 1
+  endif
+  iMotion++
+enddo
+
+return minIndexAvg + 1
+------
